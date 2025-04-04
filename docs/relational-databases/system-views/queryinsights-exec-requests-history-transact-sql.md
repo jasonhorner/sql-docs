@@ -50,6 +50,35 @@ The `queryinsights.exec_requests_history` in [!INCLUDE [fabric](../../includes/f
 
 You should have access to a [[!INCLUDE [fabric-se](../../includes/fabric-se.md)]](/fabric/data-warehouse/data-warehousing#sql-endpoint-of-the-lakehouse) or [[!INCLUDE [fabric-dw](../../includes/fabric-dw.md)]](/fabric/data-warehouse/data-warehousing#synapse-data-warehouse) within a [Premium capacity](/power-bi/enterprise/service-premium-what-is) workspace with Contributor or above permissions.
 
+## Examples
+
+### A. Find queries from the last 24hr's
+
+This query returns detailed information about all queries submitted in the past 24 hours — including full text, duration, resource usage, and status — while excluding the current session's queries.
+
+```sql
+SELECT
+    distributed_statement_id,
+    session_id,
+    login_name,
+    program_name,
+    submit_time,
+    start_time,
+    total_elapsed_time_ms / 1000.0 AS duration_seconds,
+    [status],
+    row_count,
+    command AS query_text,
+    [label],
+    allocated_cpu_time_ms,
+    data_scanned_remote_storage_mb,
+    data_scanned_memory_mb,
+    data_scanned_disk_mb
+FROM queryinsights.exec_requests_history
+WHERE submit_time >= DATEADD(HOUR, -24, GETDATE())   -- Last 24 hours
+  AND session_id <> @@SPID                          -- Exclude my session
+ORDER BY submit_time DESC;
+```
+
 ## Related content
 
 - [Query insights in Fabric data warehousing](/fabric/data-warehouse/query-insights)
